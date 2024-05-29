@@ -1,7 +1,8 @@
 #include <Arduino_APDS9960.h>
 #include <Wire.h>
+#include <ArduinoBLE.h>
 
-#define SERIAL 1
+#define SERIAL 0
 
 #define FAN_DRIVER D12
 #define TEMP_HIGH 30.0
@@ -40,6 +41,16 @@ enum Mode
 float humidity = 0;
 float temperature = 0;
 
+const char *serviceUuid = "4625E9D0-EA59-4E6C-A81D-282F46BC25A9";
+const char *modeUuid = "7356A709-0235-4976-91AB-49F8AC825442";
+const char *temperatureUuid = "9E762D6E-4034-4407-B4F3-94579F8658FE";
+const char *humidityUuid = "B56F03B4-D496-48BF-8BFC-A54D19FC1D0D";
+
+BLEService fanService(serviceUuid);
+BLEByteCharacteristic modeCharacteristic(modeUuid, BLERead | BLEWrite);
+BLEFloatCharacteristic temperatureCharacteristic(temperatureUuid, BLERead);
+BLEFloatCharacteristic humidityCharacteristic(humidityUuid, BLERead);
+
 void setup()
 {
   pinMode(LEDR, OUTPUT);
@@ -58,7 +69,7 @@ void setup()
     ;
 #endif
 
-  if (!APDS.begin())
+  if (!APDS.begin() || !BLE.begin())
   {
     digitalWrite(LED_BUILTIN, HIGH);
     while (true)
@@ -68,6 +79,14 @@ void setup()
   }
 
   Wire1.begin();
+
+  BLE.setLocalName("Fan Control");
+  BLE.setAdvertisedService(fanService);
+  fanService.addCharacteristic(modeCharacteristic);
+  fanService.addCharacteristic(temperatureCharacteristic);
+  fanService.addCharacteristic(humidityCharacteristic);
+  BLE.addService(fanService);
+  BLE.advertise();
 }
 
 void loop()
@@ -100,6 +119,7 @@ void loop()
       mode = AUTO;
     }
     colors[mode]();
+    modeCharacteristic.writeValue(mode);
   }
 
   static unsigned long last_hs3003 = 0;
@@ -121,24 +141,40 @@ void loop()
   static bool fan = false;
   if (temperature > TEMP_HIGH && !fan)
   {
-    digitalWrite(FAN_DRIVER, LOW);
     fan = true;
   }
   else if (temperature < TEMP_LOW && fan)
   {
-    digitalWrite(FAN_DRIVER, HIGH);
     fan = false;
   }
   if (mode == AUTO && fan)
   {
     mode = AUTO_ON;
     colors[mode]();
+    modeCharacteristic.writeValue(mode);
   }
   else if (mode == AUTO_ON && !fan)
   {
     mode = AUTO;
     colors[mode]();
+    modeCharacteristic.writeValue(mode);
   }
+
+  BLEDevice central = BLE.central();
+  if (central)
+  {
+    if (modeCharacteristic.written())
+    {
+#if SERIAL
+      Serial.print("New mode: ");
+      Serial.println(modeCharacteristic.value());
+#endif
+      mode = (Mode)modeCharacteristic.value();
+      colors[mode]();
+    }
+  }
+
+  digitalWrite(FAN_DRIVER, mode == ON || mode == AUTO_ON);
 }
 
 void wakeHS3003()
@@ -174,6 +210,9 @@ void readHS3003()
 
   humidity = ((float)hum / 16383) * 100;
   temperature = ((float)temp / 16383) * 165 - 40;
+
+  temperatureCharacteristic.writeValue(temperature);
+  humidityCharacteristic.writeValue(humidity);
 
 #if SERIAL
   Serial.print("Humidity: ");
