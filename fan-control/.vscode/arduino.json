@@ -1,6 +1,6 @@
 {
-  "port": "/dev/tty.usbmodem101",
-  "board": "arduino:mbed_nano:nano33ble",
-  "sketch": "fan-control.ino",
-  "output": "fan-control.bin"
+    "port": "/dev/tty.usbmodem1101",
+    "board": "arduino:mbed_nano:nano33ble",
+    "sketch": "fan-control.ino",
+    "output": "fan-control.bin"
 }

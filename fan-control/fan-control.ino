@@ -1,10 +1,13 @@
 #include <Arduino_APDS9960.h>
 #include <Wire.h>
 #include <ArduinoBLE.h>
+#include <mbed.h>
 
 #define SERIAL 0
 
-#define FAN_DRIVER D12
+#define FAN_DRIVER D0
+#define FAN_ON HIGH
+#define FAN_OFF LOW
 #define TEMP_HIGH 30.0
 #define TEMP_LOW 29.0
 
@@ -36,20 +39,27 @@ enum Mode
   ON = 1,
   AUTO = 2,
   AUTO_ON = 3,
+  THROTTLE = 4,
 };
 
 float humidity = 0;
 float temperature = 0;
 
+volatile byte throttle = 0;
+
 const char *serviceUuid = "4625E9D0-EA59-4E6C-A81D-282F46BC25A9";
 const char *modeUuid = "7356A709-0235-4976-91AB-49F8AC825442";
 const char *temperatureUuid = "9E762D6E-4034-4407-B4F3-94579F8658FE";
 const char *humidityUuid = "B56F03B4-D496-48BF-8BFC-A54D19FC1D0D";
+const char *throttleUuid = "9A76D379-96CD-4BC7-979E-15982AF7A1E9";
 
 BLEService fanService(serviceUuid);
 BLEByteCharacteristic modeCharacteristic(modeUuid, BLERead | BLEWrite);
 BLEFloatCharacteristic temperatureCharacteristic(temperatureUuid, BLERead);
 BLEFloatCharacteristic humidityCharacteristic(humidityUuid, BLERead);
+BLEByteCharacteristic throttleCharacteristic(throttleUuid, BLERead | BLEWrite);
+
+mbed::Ticker timer;
 
 void setup()
 {
@@ -81,12 +91,16 @@ void setup()
   Wire1.begin();
 
   BLE.setLocalName("Fan Control");
+  BLE.setDeviceName("Fan Control");
   BLE.setAdvertisedService(fanService);
   fanService.addCharacteristic(modeCharacteristic);
   fanService.addCharacteristic(temperatureCharacteristic);
   fanService.addCharacteristic(humidityCharacteristic);
+  fanService.addCharacteristic(throttleCharacteristic);
   BLE.addService(fanService);
   BLE.advertise();
+
+  timer.attach_us(&run_throttle, 1000);
 }
 
 void loop()
@@ -172,9 +186,23 @@ void loop()
       mode = (Mode)modeCharacteristic.value();
       colors[mode]();
     }
+    if (throttleCharacteristic.written())
+    {
+#if SERIAL
+      Serial.print("New throttle: ");
+      Serial.println(throttleCharacteristic.value());
+#endif
+      throttle = throttleCharacteristic.value();
+      mode = throttle == 0 ? ON : THROTTLE;
+      colors[mode]();
+    }
   }
 
-  digitalWrite(FAN_DRIVER, mode == ON || mode == AUTO_ON);
+  if (mode != THROTTLE)
+  {
+    digitalWrite(FAN_DRIVER, mode == ON || mode == AUTO_ON ? FAN_ON : FAN_OFF);
+    throttle = 0;
+  }
 }
 
 void wakeHS3003()
@@ -221,4 +249,61 @@ void readHS3003()
   Serial.print(temperature);
   Serial.println("C");
 #endif
+}
+
+// this is called every 1ms
+void run_throttle()
+{
+  // a cycle begins by switching on the power supply; it takes 2ms for the buck converter to start
+  // after 2+throttle ms switch off the power again and then wait at least 1ms (converter stops after 600µs)
+  static byte cycle = 0;
+
+  if (throttle == 0)
+  {
+    cycle = 0;
+    return;
+  }
+
+  byte switch_off = throttle < 10 ? 4 : throttle - 6;
+  byte restart = switch_off + 1;
+  switch (throttle)
+  {
+  case 1:
+    restart = 22;
+    break;
+  case 2:
+    restart = 18;
+    break;
+  case 3:
+    restart = 15;
+    break;
+  case 4:
+    restart = 13;
+    break;
+  case 5:
+    restart = 11;
+    break;
+  case 6:
+    restart = 9;
+    break;
+  case 7:
+    restart = 7;
+    break;
+  case 8:
+    restart = 6;
+    break;
+  case 9:
+    restart = 5;
+    break;
+  }
+
+  if (cycle == 0)
+    digitalWrite(FAN_DRIVER, FAN_ON);
+  else if (cycle == switch_off)
+    digitalWrite(FAN_DRIVER, FAN_OFF);
+
+  cycle++;
+
+  if (cycle == restart)
+    cycle = 0;
 }
