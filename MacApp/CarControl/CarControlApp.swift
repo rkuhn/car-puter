@@ -8,20 +8,20 @@
 import SwiftUI
 
 @main
-struct CarControlApp: App {
+class CarControlApp: App {
     var measurements: Measurements
-    var controller: Controller
+    var bleController: BleController
     
     var body: some Scene {
         WindowGroup {
-            ContentView(measurements: measurements, controller: controller)
+            ContentView(measurements: measurements, controller: bleController)
         }
     }
     
-    public init() {
+    required public init() {
         print("starting")
         measurements = Measurements.init()
-        controller = Controller.init()
+        bleController = BleController.init(measurements: measurements)
         print("started")
     }
 }

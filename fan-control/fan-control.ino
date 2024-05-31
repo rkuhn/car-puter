@@ -54,10 +54,10 @@ const char *humidityUuid = "B56F03B4-D496-48BF-8BFC-A54D19FC1D0D";
 const char *throttleUuid = "9A76D379-96CD-4BC7-979E-15982AF7A1E9";
 
 BLEService fanService(serviceUuid);
-BLEByteCharacteristic modeCharacteristic(modeUuid, BLERead | BLEWrite);
-BLEFloatCharacteristic temperatureCharacteristic(temperatureUuid, BLERead);
-BLEFloatCharacteristic humidityCharacteristic(humidityUuid, BLERead);
-BLEByteCharacteristic throttleCharacteristic(throttleUuid, BLERead | BLEWrite);
+BLEByteCharacteristic modeCharacteristic(modeUuid, BLERead | BLEWrite | BLENotify);
+BLEFloatCharacteristic temperatureCharacteristic(temperatureUuid, BLERead | BLENotify);
+BLEFloatCharacteristic humidityCharacteristic(humidityUuid, BLERead | BLENotify);
+BLEByteCharacteristic throttleCharacteristic(throttleUuid, BLERead | BLEWrite | BLENotify);
 
 mbed::Ticker timer;
 
@@ -174,9 +174,16 @@ void loop()
     modeCharacteristic.writeValue(mode);
   }
 
-  BLEDevice central = BLE.central();
+  static BLEDevice central = BLE.central();
+  if (!central)
+  {
+    central = BLE.central();
+  }
+
   if (central)
   {
+    central.poll();
+
     if (modeCharacteristic.written())
     {
 #if SERIAL
@@ -184,6 +191,8 @@ void loop()
       Serial.println(modeCharacteristic.value());
 #endif
       mode = (Mode)modeCharacteristic.value();
+      throttle = 0;
+      throttleCharacteristic.writeValue(0);
       colors[mode]();
     }
     if (throttleCharacteristic.written())
@@ -194,6 +203,7 @@ void loop()
 #endif
       throttle = throttleCharacteristic.value();
       mode = throttle == 0 ? ON : THROTTLE;
+      modeCharacteristic.writeValue(mode);
       colors[mode]();
     }
   }

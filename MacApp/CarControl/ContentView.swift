@@ -10,10 +10,19 @@ import SwiftUI
 struct ContentView: View {
     @State private var throttle: Double = 1.0
     @ObservedObject var measurements: Measurements
-    @StateObject var controller: Controller
+    var controller: BleController
     
     var body: some View {
         VStack {
+            GroupBox(label: Text("Connection")) {
+                Grid(alignment: .leading) {
+                    GridRow {
+                        Text("RSSI:")
+                        Text("\($measurements.rssi.wrappedValue) dB")
+                            .frame(width: 200, alignment: .leading)
+                    }
+                }
+            }
             GroupBox(label: Text("Measurements:")) {
                 Grid(alignment: .leading) {
                     GridRow {
@@ -31,13 +40,13 @@ struct ContentView: View {
                     }
                     GridRow {
                         Text("Humidity:")
-                        Text(String(format: "%05.2f°C", $measurements.humidity.wrappedValue))
+                        Text(String(format: "%05.2f%", $measurements.humidity.wrappedValue))
                     }
                 }
-            }.padding(.bottom, 50)
+            }.padding([.bottom, .top], 50)
 
             Button(/*@START_MENU_TOKEN@*/"ON"/*@END_MENU_TOKEN@*/) {
-                controller.mode = .on
+                controller.setMode(.on)
             }
                 .buttonStyle(.borderedProminent)
                 .accentColor(.green)
@@ -49,17 +58,17 @@ struct ContentView: View {
                     Text("Throttle")
                 } onEditingChanged: { editing in
                     if (!editing) {
-                        controller.mode = .throttle(UInt8($throttle.wrappedValue))
+                        controller.setMode(.throttle(UInt8($throttle.wrappedValue)))
                     }
                 }
                 .frame(width: 200.0)
                 
                 Text(String(format: "%.0f", $throttle.wrappedValue))
                     .frame(width: 50, alignment: .leading)
-            }
+            }.padding()
 
             Button(/*@START_MENU_TOKEN@*/"OFF"/*@END_MENU_TOKEN@*/) {
-                controller.mode = .off
+                controller.setMode(.off)
             }
                 .buttonStyle(.borderedProminent)
                 .accentColor(.red)
@@ -69,7 +78,7 @@ struct ContentView: View {
                 .padding()
             
             Button(/*@START_MENU_TOKEN@*/"AUTO"/*@END_MENU_TOKEN@*/) {
-                controller.mode = .auto
+                controller.setMode(.auto)
             }
                 .buttonStyle(.borderedProminent)
                 .accentColor(.purple)
@@ -79,5 +88,6 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView(measurements: Measurements.init(), controller: Controller.init())
+    let m = Measurements.init()
+    return ContentView(measurements: m, controller: BleController.init(measurements: m))
 }

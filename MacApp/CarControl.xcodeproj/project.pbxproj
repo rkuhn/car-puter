@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		53BB795D2C09F4B500A91ACF /* BLE.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53BB795C2C09F4B500A91ACF /* BLE.swift */; };
 		53E12A372C08C3BB0020A673 /* CarControlApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E12A362C08C3BB0020A673 /* CarControlApp.swift */; };
 		53E12A392C08C3BB0020A673 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E12A382C08C3BB0020A673 /* ContentView.swift */; };
 		53E12A3B2C08C3BB0020A673 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 53E12A3A2C08C3BB0020A673 /* Assets.xcassets */; };
@@ -15,6 +16,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		53BB795C2C09F4B500A91ACF /* BLE.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLE.swift; sourceTree = "<group>"; };
 		53E12A332C08C3BB0020A673 /* CarControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CarControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		53E12A362C08C3BB0020A673 /* CarControlApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarControlApp.swift; sourceTree = "<group>"; };
 		53E12A382C08C3BB0020A673 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 		53E12A352C08C3BB0020A673 /* CarControl */ = {
 			isa = PBXGroup;
 			children = (
+				53BB795C2C09F4B500A91ACF /* BLE.swift */,
 				53E12A362C08C3BB0020A673 /* CarControlApp.swift */,
 				53E12A382C08C3BB0020A673 /* ContentView.swift */,
 				53E12A452C08DBA60020A673 /* DataModel.swift */,
@@ -145,6 +148,7 @@
 				53E12A392C08C3BB0020A673 /* ContentView.swift in Sources */,
 				53E12A372C08C3BB0020A673 /* CarControlApp.swift in Sources */,
 				53E12A462C08DBA60020A673 /* DataModel.swift in Sources */,
+				53BB795D2C09F4B500A91ACF /* BLE.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,8 +278,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CarControl/Preview Content\"";
+				DEVELOPMENT_TEAM = FWKA26VF5A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app needs BLE.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "This app needs to use BLE.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -310,8 +317,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CarControl/Preview Content\"";
+				DEVELOPMENT_TEAM = FWKA26VF5A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app needs BLE.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "This app needs to use BLE.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
