@@ -1,0 +1,6 @@
+{
+  "port": "/dev/tty.usbmodem1101",
+  "board": "arduino:mbed_nano:nano33ble",
+  "sketch": "exploration.ino",
+  "output": "exploration.bin"
+}

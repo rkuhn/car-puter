@@ -25,22 +25,33 @@ struct ContentView: View {
             }
             GroupBox(label: Text("Measurements:")) {
                 Grid(alignment: .leading) {
+                    let mode = String.init(describing: ControllerMode.fromByte( $measurements.mode.wrappedValue, withThrottle: $measurements.throttle.wrappedValue))
                     GridRow {
                         Text("Mode:")
-                        Text("\($measurements.mode.wrappedValue)")
+                        Text(mode)
                             .frame(width: 200, alignment: .leading)
                     }
                     GridRow {
-                        Text("Throttle:")
-                        Text("\($measurements.throttle.wrappedValue)")
-                    }
-                    GridRow {
                         Text("Temperature:")
-                        Text(String(format: "%05.2f°C", $measurements.temperature.wrappedValue))
+                        HStack {
+                            Text(String(format: "%05.2f°C ", $measurements.temperature.wrappedValue))
+                            Spacer()
+                            Text($measurements.temperatureTimestamp.wrappedValue, style: .timer)
+                                .fontDesign(.monospaced)
+                                .foregroundStyle(.secondary)
+                                .scaleEffect(0.8, anchor: .bottomLeading)
+                        }.frame(width: 150)
                     }
                     GridRow {
                         Text("Humidity:")
-                        Text(String(format: "%05.2f%", $measurements.humidity.wrappedValue))
+                        HStack {
+                            Text(String(format: "%05.2f%%", $measurements.humidity.wrappedValue))
+                            Spacer()
+                            Text($measurements.humidityTimestamp.wrappedValue, style: .timer)
+                                .fontDesign(.monospaced)
+                                .foregroundStyle(.secondary)
+                                .scaleEffect(0.8, anchor: .bottomLeading)
+                        }.frame(width: 150)
                     }
                 }
             }.padding([.bottom, .top], 50)

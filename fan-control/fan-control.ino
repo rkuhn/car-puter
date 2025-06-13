@@ -91,7 +91,6 @@ void setup()
   Wire1.begin();
 
   BLE.setLocalName("Fan Control");
-  BLE.setDeviceName("Fan Control");
   BLE.setAdvertisedService(fanService);
   fanService.addCharacteristic(modeCharacteristic);
   fanService.addCharacteristic(temperatureCharacteristic);

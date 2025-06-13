@@ -1,0 +1,36 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "fan-control"
+    },
+    {
+      "path": "exploration"
+    }
+  ],
+  "settings": {
+    "files.associations": {
+      "istream": "cpp",
+      "*.tcc": "cpp",
+      "__locale": "cpp",
+      "iterator": "cpp",
+      "fstream": "cpp",
+      "ios": "cpp",
+      "locale": "cpp",
+      "ostream": "cpp",
+      "sstream": "cpp",
+      "streambuf": "cpp",
+      "string": "cpp",
+      "__bit_reference": "cpp",
+      "__hash_table": "cpp",
+      "__split_buffer": "cpp",
+      "array": "cpp",
+      "initializer_list": "cpp",
+      "string_view": "cpp",
+      "unordered_map": "cpp",
+      "vector": "cpp"
+    }
+  }
+}

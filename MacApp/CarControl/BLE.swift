@@ -29,7 +29,9 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
     public init(measurements: Measurements) {
         self.measurements = measurements
         super.init()
+        
         ble = CBCentralManager(delegate: self, queue: nil, options: [CBCentralManagerOptionShowPowerAlertKey : true])
+        
         timer.schedule(deadline: .now(), repeating: .seconds(1))
         timer.setEventHandler {
             if self.connected {
@@ -50,6 +52,8 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
             peripheral?.writeValue(Data([2]), for: modeService!, type: .withResponse)
         case .throttle(let x):
             peripheral?.writeValue(Data([x]), for: throttleService!, type: .withResponse)
+        default:
+            print("cannot set mode to \(mode)")
         }
     }
     
