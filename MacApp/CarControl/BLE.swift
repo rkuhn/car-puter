@@ -20,11 +20,13 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
     let temperatureId = CBUUID.init(string: "9E762D6E-4034-4407-B4F3-94579F8658FE")
     let humidityId = CBUUID.init(string: "B56F03B4-D496-48BF-8BFC-A54D19FC1D0D")
     let throttleId = CBUUID.init(string: "9A76D379-96CD-4BC7-979E-15982AF7A1E9")
+    let thresholdId = CBUUID.init(string: "4018B5FA-48A1-4A15-8293-CCB842DF518D")
     
     private var modeService: CBCharacteristic?
     private var temperaturService: CBCharacteristic?
     private var humidityService: CBCharacteristic?
     private var throttleService: CBCharacteristic?
+    private var thresholdService: CBCharacteristic?
 
     public init(measurements: Measurements) {
         self.measurements = measurements
@@ -55,6 +57,12 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
         default:
             print("cannot set mode to \(mode)")
         }
+    }
+    
+    public func setThreshold(_ threshold: Float) {
+        if thresholdService == nil { return }
+        let data = withUnsafeBytes(of: threshold) { Data($0) }
+        peripheral?.writeValue(data, for: thresholdService!, type: .withResponse)
     }
     
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -112,6 +120,7 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
             temperaturService = nil
             humidityService = nil
             throttleService = nil
+            thresholdService = nil
             
             print("disconnected (\(error.debugDescription))")
             ble.scanForPeripherals(withServices: [serviceId], options: [CBCentralManagerScanOptionAllowDuplicatesKey : true])
@@ -133,12 +142,6 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
         }
     }
     
-    func peripheralDidUpdateRSSI(_ peripheral: CBPeripheral, error: Error?) {
-        if self.peripheral != peripheral { return }
-        print("got RSSI 2")
-        measurements.rssi = peripheral.rssi?.intValue ?? -255
-    }
-    
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         if self.peripheral != peripheral { return }
         if error != nil {
@@ -149,7 +152,7 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
             for service in services {
                 if service.uuid == serviceId {
                     print("service found")
-                    peripheral.discoverCharacteristics([modeId, temperatureId, humidityId, throttleId], for: service)
+                    peripheral.discoverCharacteristics([modeId, temperatureId, humidityId, throttleId, thresholdId], for: service)
                     break
                 }
             }
@@ -176,6 +179,10 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
                     peripheral.readValue(for: characteristic)
                 case throttleId:
                     throttleService = characteristic
+                    peripheral.setNotifyValue(true, for: characteristic)
+                    peripheral.readValue(for: characteristic)
+                case thresholdId:
+                    thresholdService = characteristic
                     peripheral.setNotifyValue(true, for: characteristic)
                     peripheral.readValue(for: characteristic)
                 default:
@@ -205,6 +212,10 @@ class BleController : NSObject, CBPeripheralDelegate, CBCentralManagerDelegate {
             }
         case throttleId:
             measurements.throttle = characteristic.value![0]
+        case thresholdId:
+            measurements.threshold = characteristic.value!.withUnsafeBytes { bytes in
+                bytes.load(as: Float.self)
+            }
         default:
             print("notify for unknown characteristic \(characteristic.uuid)")
         }

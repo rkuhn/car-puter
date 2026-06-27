@@ -12,6 +12,7 @@ class Measurements: ObservableObject {
     
     @Published var mode: UInt8 = 255
     @Published var throttle: UInt8 = 0
+    @Published var threshold: Float = -Float.infinity
     
     @Published var temperature: Float = -Float.infinity {
         didSet {

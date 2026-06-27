@@ -8,8 +8,8 @@
 #define FAN_DRIVER D0
 #define FAN_ON HIGH
 #define FAN_OFF LOW
-#define TEMP_HIGH 30.0
-#define TEMP_LOW 29.0
+
+#define TEMP_HYSTERESIS 1.5
 
 /**
  * NOTE: On my particular board LEDB and LEDG are swapped.
@@ -46,18 +46,21 @@ float humidity = 0;
 float temperature = 0;
 
 volatile byte throttle = 0;
+volatile float threshold = 30;
 
 const char *serviceUuid = "4625E9D0-EA59-4E6C-A81D-282F46BC25A9";
 const char *modeUuid = "7356A709-0235-4976-91AB-49F8AC825442";
 const char *temperatureUuid = "9E762D6E-4034-4407-B4F3-94579F8658FE";
 const char *humidityUuid = "B56F03B4-D496-48BF-8BFC-A54D19FC1D0D";
 const char *throttleUuid = "9A76D379-96CD-4BC7-979E-15982AF7A1E9";
+const char *thresholdUuid = "4018B5FA-48A1-4A15-8293-CCB842DF518D";
 
 BLEService fanService(serviceUuid);
 BLEByteCharacteristic modeCharacteristic(modeUuid, BLERead | BLEWrite | BLENotify);
 BLEFloatCharacteristic temperatureCharacteristic(temperatureUuid, BLERead | BLENotify);
 BLEFloatCharacteristic humidityCharacteristic(humidityUuid, BLERead | BLENotify);
 BLEByteCharacteristic throttleCharacteristic(throttleUuid, BLERead | BLEWrite | BLENotify);
+BLEFloatCharacteristic thresholdCharacteristic(thresholdUuid, BLERead | BLEWrite | BLENotify);
 
 mbed::Ticker timer;
 
@@ -96,6 +99,7 @@ void setup()
   fanService.addCharacteristic(temperatureCharacteristic);
   fanService.addCharacteristic(humidityCharacteristic);
   fanService.addCharacteristic(throttleCharacteristic);
+  fanService.addCharacteristic(thresholdCharacteristic);
   BLE.addService(fanService);
   BLE.advertise();
 
@@ -104,7 +108,7 @@ void setup()
 
 void loop()
 {
-  static Mode mode = OFF;
+  static Mode mode = AUTO;
   static byte first = 1;
   if (first)
   {
@@ -129,7 +133,22 @@ void loop()
     }
     else
     {
-      mode = AUTO;
+      if (mode == THROTTLE) {
+        if (gesture == GESTURE_LEFT && throttle > 3) {
+          throttle -= 1;
+        }
+        if (gesture == GESTURE_RIGHT && throttle < 20) {
+          throttle += 1;
+        }
+      } else {
+        if (mode == OFF) {
+          throttle = 3;
+        } else {
+          throttle = 15;
+        }
+        mode = THROTTLE;
+      }
+      throttleCharacteristic.writeValue(throttle);
     }
     colors[mode]();
     modeCharacteristic.writeValue(mode);
@@ -152,11 +171,11 @@ void loop()
   }
 
   static bool fan = false;
-  if (temperature > TEMP_HIGH && !fan)
+  if (temperature > threshold && !fan)
   {
     fan = true;
   }
-  else if (temperature < TEMP_LOW && fan)
+  else if (temperature < (threshold - TEMP_HYSTERESIS) && fan)
   {
     fan = false;
   }
@@ -204,6 +223,14 @@ void loop()
       mode = throttle == 0 ? ON : THROTTLE;
       modeCharacteristic.writeValue(mode);
       colors[mode]();
+    }
+    if (thresholdCharacteristic.written())
+    {
+#if SERIAL
+      Serial.print("New threshold: ");
+      Serial.println(thresholdCharacteristic.value());
+#endif
+      threshold = thresholdCharacteristic.value();
     }
   }
 

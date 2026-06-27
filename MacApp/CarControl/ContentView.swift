@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var throttle: Double = 1.0
+    @State private var threshold: Double = 30.0
     @ObservedObject var measurements: Measurements
     var controller: BleController
     
@@ -53,6 +54,11 @@ struct ContentView: View {
                                 .scaleEffect(0.8, anchor: .bottomLeading)
                         }.frame(width: 150)
                     }
+                    GridRow {
+                        Text("Threshold:")
+                        Text(String(format: "%05.2f°C", $measurements.threshold.wrappedValue))
+                            .frame(width: 200, alignment: .leading)
+                    }
                 }
             }.padding([.bottom, .top], 50)
 
@@ -88,6 +94,22 @@ struct ContentView: View {
                 .frame(width: 100.0)
                 .padding()
             
+            HStack {
+                Text("").frame(width: 50)
+                
+                Slider(value: $threshold, in: 25...45, step: 1) {
+                    Text("Threshold")
+                } onEditingChanged: { editing in
+                    if (!editing) {
+                        controller.setThreshold(Float($threshold.wrappedValue))
+                    }
+                }
+                .frame(width: 200.0)
+                
+                Text(String(format: "%.1f°C", $threshold.wrappedValue))
+                    .frame(width: 60, alignment: .leading)
+            }.padding()
+            
             Button(/*@START_MENU_TOKEN@*/"AUTO"/*@END_MENU_TOKEN@*/) {
                 controller.setMode(.auto)
             }
@@ -95,6 +117,11 @@ struct ContentView: View {
                 .accentColor(.purple)
                     }
         .padding()
+        .onChange(of: measurements.threshold) { _, newValue in
+            if newValue.isFinite {
+                threshold = Double(newValue)
+            }
+        }
     }
 }
 
